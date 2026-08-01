@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_c696246df0401cfc82065b259780f027 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+    <div id="relive-hud" style="
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(8px);
+        color: #ffffff;
+        padding: 16px 20px;
+        border-radius: 14px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.15);
+        min-width: 220px;
+    ">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #94a3b8; font-size: 13px;">🏔️ Височина:</span>
+            <span id="hud-ele" style="font-weight: 700; font-size: 14px; color: #38bdf8;">0 m</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #94a3b8; font-size: 13px;">📏 Разстояние:</span>
+            <span id="hud-dist" style="font-weight: 700; font-size: 14px; color: #4ade80;">0.00 km</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #94a3b8; font-size: 13px;">⏱️ Време:</span>
+            <span id="hud-time" style="font-weight: 700; font-size: 14px; color: #fb7185;">00:00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: #94a3b8; font-size: 13px;">📊 Напредък:</span>
+            <span id="hud-prog" style="font-weight: 700; font-size: 14px; color: #facc15;">0%</span>
+        </div>
+        
+        <div style="width: 100%; background: #334155; height: 6px; border-radius: 3px; overflow: hidden;">
+            <div id="hud-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff6b35, #facc15); transition: width 0.1s linear;"></div>
+        </div>
+        
+        <button id="relive-play-btn" onclick="toggleReliveAnim()" style="
+            margin-top: 12px;
+            width: 100%;
+            padding: 8px;
+            background: #ff6b35;
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        ">Пауза</button>
+    </div>
+
+    <style>
+        .relive-pulse-marker {
+            width: 18px;
+            height: 18px;
+            background-color: #ff3300;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #ff3300, 0 0 25px #ff3300;
+        }
+    </style>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(function() {
+            var map = map_c696246df0401cfc82065b259780f027;
+            var lats = [43.1892484360267, 43.18954881349913, 43.18927346743976, 43.189348562094665, 43.186544967240906, 43.18504298855845, 43.183816345315904, 43.18299022487986, 43.18158829705516, 43.18058690073721, 43.18046172504259, 43.179134847092854, 43.1776076501485, 43.176681296631784, 43.175604710512545, 43.1750789283538, 43.174728403762884, 43.17330124756606, 43.17232475536943, 43.17214948446605, 43.172274677201074, 43.17297575253875, 43.17370185738778, 43.17465329040661, 43.174878628288155, 43.17628071017552, 43.17645596731228, 43.176681296631784, 43.175003815428624, 43.17465329040661, 43.17460321605785, 43.17505388944889, 43.17482855412422, 43.17410246267136, 43.17315101916057, 43.173176056935404, 43.17355162805745, 43.17390215940293];
+            var lons = [23.08024978742469, 23.079151153040584, 23.078670503280595, 23.07798385777278, 23.077674866770394, 23.076644898508675, 23.075958253000863, 23.076095582626294, 23.076301575754773, 23.07698822126258, 23.075580598495435, 23.0764389053802, 23.07705688476563, 23.07705688476563, 23.078327180526685, 23.078361512278207, 23.078052521275822, 23.079700471542314, 23.081623078440316, 23.083030701207463, 23.081691741943363, 23.08045578055317, 23.078979491663635, 23.078155519149735, 23.076095582626294, 23.075820923375435, 23.073314666224178, 23.070018768310547, 23.068954468297306, 23.066860200022347, 23.063770293927522, 23.06208801321918, 23.06040573120117, 23.059341431187935, 23.055290222953772, 23.054569244384762, 23.05316162161762, 23.051891327166235];
+            var elevs = [1534.0, 1551.0, 1551.0, 1551.0, 1582.0, 1644.0, 1644.0, 1679.0, 1679.0, 1754.0, 1754.0, 1844.0, 1844.0, 1899.0, 1844.0, 1844.0, 1872.0, 1876.0, 1946.0, 1946.0, 1946.0, 1876.0, 1872.0, 1872.0, 1860.0, 1899.0, 1925.0, 1927.0, 1927.0, 1871.0, 1877.0, 1882.0, 1920.0, 1920.0, 1945.0, 1945.0, 1997.0, 1994.0];
+            var dists = [0.0, 0.09533910529539438, 0.14496138355277147, 0.20139895316832465, 0.5138794466765985, 0.7005733530230391, 0.8478388392038568, 0.9402943491806046, 1.0969411202641786, 1.2214132308904821, 1.3366973951634114, 1.4997914818157954, 1.6767406414298103, 1.7796549861998683, 1.937683474448896, 1.9961625125141644, 2.0425055965700643, 2.2500951321889437, 2.440379952933299, 2.5564822544165384, 2.666241664672335, 2.7933887109543143, 2.938014488651885, 3.063159429324653, 3.232512333570383, 3.389870974488533, 3.5945761848370594, 3.8637227580282705, 4.069195871969858, 4.243875625728061, 4.495176445657861, 4.6408370565042345, 4.779894084896789, 4.898198103299539, 5.244149443129035, 5.302839325744558, 5.424663135600462, 5.535049254765206];
+            var durationMs = 12 * 1000;
+            var speedKmh = 4.0;
+            var totalPoints = lats.length;
+
+            var activeLine = L.polyline([], {
+                color: '#ff3300',
+                weight: 5,
+                opacity: 0.9,
+                lineCap: 'round'
+            }).addTo(map);
+
+            var customIcon = L.divIcon({
+                className: 'relive-pulse-marker',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            });
+            var marker = L.marker([lats[0], lons[0]], {icon: customIcon}).addTo(map);
+
+            var startTime = null;
+            var animationId = null;
+            var isPaused = false;
+            var pausedProgress = 0;
+
+            function formatTime(totalMinutes) {
+                var hrs = Math.floor(totalMinutes / 60);
+                var mins = Math.floor(totalMinutes % 60);
+                if (hrs > 0) {
+                    return hrs + " ч " + (mins < 10 ? "0" : "") + mins + " мин";
+                }
+                return mins + " мин";
+            }
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                var elapsed = (timestamp - startTime) + (pausedProgress * durationMs);
+                var progress = Math.min(elapsed / durationMs, 1.0);
+
+                var idxFloat = progress * (totalPoints - 1);
+                var idx = Math.floor(idxFloat);
+                var nextIdx = Math.min(idx + 1, totalPoints - 1);
+                var factor = idxFloat - idx;
+
+                var curLat = lats[idx] + (lats[nextIdx] - lats[idx]) * factor;
+                var curLon = lons[idx] + (lons[nextIdx] - lons[idx]) * factor;
+                var curEle = elevs[idx] + (elevs[nextIdx] - elevs[idx]) * factor;
+                var curDist = dists[idx] + (dists[nextIdx] - dists[idx]) * factor;
+                
+                var elapsedMinutes = (curDist / speedKmh) * 60;
+
+                var currentPath = [];
+                for (var i = 0; i <= idx; i++) {
+                    currentPath.push([lats[i], lons[i]]);
+                }
+                currentPath.push([curLat, curLon]);
+                activeLine.setLatLngs(currentPath);
+
+                marker.setLatLng([curLat, curLon]);
+                map.panTo([curLat, curLon], { animate: false });
+
+                document.getElementById('hud-ele').innerText = Math.round(curEle) + ' m';
+                document.getElementById('hud-dist').innerText = curDist.toFixed(2) + ' km';
+                document.getElementById('hud-time').innerText = formatTime(elapsedMinutes);
+                document.getElementById('hud-prog').innerText = Math.round(progress * 100) + '%';
+                document.getElementById('hud-bar').style.width = (progress * 100) + '%';
+
+                if (progress < 1.0 && !isPaused) {
+                    animationId = requestAnimationFrame(animate);
+                } else if (progress >= 1.0) {
+                    document.getElementById('relive-play-btn').innerText = 'Повтори';
+                }
+            }
+
+            window.toggleReliveAnim = function() {
+                var btn = document.getElementById('relive-play-btn');
+                if (btn.innerText === 'Повтори') {
+                    startTime = null;
+                    pausedProgress = 0;
+                    btn.innerText = 'Пауза';
+                    animationId = requestAnimationFrame(animate);
+                } else if (isPaused) {
+                    isPaused = false;
+                    startTime = performance.now() - (pausedProgress * durationMs);
+                    btn.innerText = 'Пауза';
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    isPaused = true;
+                    var progText = document.getElementById('hud-prog').innerText;
+                    pausedProgress = parseFloat(progText) / 100;
+                    cancelAnimationFrame(animationId);
+                    btn.innerText = 'Старт';
+                }
+            };
+
+            animationId = requestAnimationFrame(animate);
+        }, 500);
+    });
+    </script>
+    
+    
+            <div class="folium-map" id="map_c696246df0401cfc82065b259780f027" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_c696246df0401cfc82065b259780f027 = L.map(
+                "map_c696246df0401cfc82065b259780f027",
+                {
+                    center: [43.1892484360267, 23.08024978742469],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 15,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_c696246df0401cfc82065b259780f027);
+
+            
+
+        
+    
+            var tile_layer_f7ae5350b55258619e774f032c57d278 = L.tileLayer(
+                "https://tile.opentopomap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 17,
+  "maxNativeZoom": 17,
+  "noWrap": false,
+  "attribution": "\u0414\u0430\u043d\u043d\u0438: \u00a9 OpenTopoMap (CC-BY-SA)",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_f7ae5350b55258619e774f032c57d278.addTo(map_c696246df0401cfc82065b259780f027);
+        
+</script>
+</html>
